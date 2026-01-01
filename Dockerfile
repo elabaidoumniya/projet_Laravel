@@ -15,7 +15,8 @@ WORKDIR /var/www/html
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY . .
-RUN composer install --no-dev --optimize-autoloaderRUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN composer install --no-dev --optimize-autoloader
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN mkdir -p /var/log/supervisor
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache

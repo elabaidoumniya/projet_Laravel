@@ -97,9 +97,6 @@
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="{{ route('etudiants.index') }}" class="btn btn-secondary me-md-2">
-                                    <i class="fas fa-arrow-left"></i> Retour
-                                </a>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Mettre à jour mon profil
                                 </button>

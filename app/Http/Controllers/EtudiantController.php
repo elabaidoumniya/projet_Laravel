@@ -57,11 +57,12 @@ class EtudiantController extends Controller
     /**
      * Enregistre un nouvel étudiant
      */
-    // Dans la méthode store
-public function store(Request $request)
+    public function store(Request $request)
 {
     $rules = Etudiant::rules($request->niveau);
-    $validated = $request->validate($rules);
+    $validated = $request->validate($rules, [
+        'email.ends_with' => 'L\'email doit se terminer par @ensat.ac.ma ou @etu.uae.ac.ma.',
+    ]);
     
     if (in_array($request->niveau, ['AP1', 'AP2'])) {
         $validated['filiere'] = null;
@@ -81,9 +82,11 @@ public function update(Request $request, Etudiant $etudiant)
 {
     $rules = Etudiant::rules($request->niveau);
     $rules['cin'] = 'required|size:8|unique:etudiants,cin,' . $etudiant->id;
-    $rules['email'] = 'required|email|ends_with:@ensat.ac.ma|unique:etudiants,email,' . $etudiant->id;
+    $rules['email'] = 'required|email|ends_with:@ensat.ac.ma,@etu.uae.ac.ma|unique:etudiants,email,' . $etudiant->id;
     
-    $validated = $request->validate($rules);
+    $validated = $request->validate($rules, [
+        'email.ends_with' => 'L\'email doit se terminer par @ensat.ac.ma ou @etu.uae.ac.ma.',
+    ]);
     if (in_array($request->niveau, ['AP1', 'AP2'])) {
         $validated['filiere'] = null;
     }
@@ -105,10 +108,18 @@ public function update(Request $request, Etudiant $etudiant)
      * Affiche les détails d'un étudiant
      */
     public function show(Etudiant $etudiant)
-    {
-        return view('etudiants.show', compact('etudiant'));
+{
+    $user = Auth::user();
+    
+    // Si l'utilisateur est étudiant, vérifier qu'il voit son propre profil
+    if ($user->isEtudiant()) {
+        if ($user->etudiant_id !== $etudiant->id) {
+            abort(403, 'Accès non autorisé. Vous ne pouvez voir que votre propre profil.');
+        }
     }
     
+    return view('etudiants.show', compact('etudiant'));
+}
     /**
      * Affiche le formulaire d'édition
      */

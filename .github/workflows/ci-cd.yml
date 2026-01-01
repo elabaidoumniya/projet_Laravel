@@ -1,0 +1,92 @@
+name: CI/CD Pipeline for Laravel App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: laravel_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: pdo, pdo_mysql, mbstring, gd, zip
+    
+    - name: Install Composer dependencies
+      run: composer install --no-progress --prefer-dist --optimize-autoloader
+    
+    - name: Copy environment file
+      run: cp .env.ci .env
+    
+    - name: Generate application key
+      run: php artisan key:generate
+    
+    - name: Run migrations
+      run: php artisan migrate --force
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: laravel_test
+        DB_USERNAME: root
+        DB_PASSWORD: password
+    
+    - name: Run tests
+      run: php artisan test
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: elabaidoumniya/monblog-app:latest, elabaidoumniya/monblog-app:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG }}
+    
+    - name: Update deployment image
+      run: |
+        kubectl set image deployment/laravel-app laravel=elabaidoumniya/monblog-app:${{ github.sha }}
+        kubectl rollout status deployment/laravel-app

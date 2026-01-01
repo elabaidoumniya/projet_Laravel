@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: laravel
-        image: monblog-app:v2
-        imagePullPolicy: Never # Important pour utiliser l'image locale
+        image: elabaidoumniya/monblog-app:v3
+        imagePullPolicy: Always # Important pour utiliser l'image locale
         ports:
         - containerPort: 80
         env:

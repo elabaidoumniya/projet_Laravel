@@ -21,7 +21,7 @@ class Etudiant extends Model
             'cin' => 'required|size:8|unique:etudiants,cin',
             'nom' => 'required|string|max:50',
             'prenom' => 'required|string|max:50',
-            'email' => 'required|email|ends_with:@ensat.ac.ma|unique:etudiants,email',
+            'email' => 'required|email|ends_with:@ensat.ac.ma,@etu.uae.ac.ma|unique:etudiants,email',
             'niveau' => 'required|in:AP1,AP2,1AC,2AC,3AC',
             'date_naissance' => 'required|date|before:today',
             'telephone' => 'nullable|regex:/^[0-9]{10}$/',
